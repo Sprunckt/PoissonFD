@@ -1,10 +1,10 @@
 #include <cmath>
 #include <iostream>
 #include <fstream>
+
+
 class Array2 {
-
 public:
-
     Array2() {}
 
     Array2(int n1, int n2): nx(n2), ny(n1) {
@@ -19,6 +19,11 @@ public:
         for (int i = 0; i < nx*ny; i++) {
             data[i] = a.data[i];
         }
+    }
+
+    Array2& operator=(Array2 const& a) {
+        *this = Array2(a);
+        return *this;
     }
 
     ~Array2() {
