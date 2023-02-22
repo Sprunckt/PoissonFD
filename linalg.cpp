@@ -43,7 +43,7 @@ Array2 Array2::solve(Array2 bc, Array2 permittivity, double tol, int maxiter, do
         {
             for (int j=1; j < nx-1; j++)
             {
-                if (bc(i,j) == 0)
+                if (bc(i,j) == 0)  // interior node
                 {
                     currval = (*this)(i,j);
                     (*this)(i,j) = ((1-omega)*currval + 

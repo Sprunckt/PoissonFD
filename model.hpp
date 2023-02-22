@@ -1,29 +1,16 @@
-#include "linalg.hpp"
+#include "mesh.hpp"
+
 
 class Model {
 public:
     Model(double xmin_, double xmax_, double ymin_, double ymax_, double dx_):
-        xmin(xmin_), xmax(xmax_), ymin(ymin_), ymax(ymax_), dx(dx_) {
-        nx =(int) (xmax - xmin)/dx + 1;
-        ny = (int) (ymax - ymin)/dx + 1;
-        permittivity = Array2(ny, nx);
+        mesh(xmin_, xmax_, ymin_, ymax_, dx_) {
+        int * shape = mesh.get_shape();
+        permittivity = Array2(shape[0], shape[1]);
         permittivity.fill(1.);
-        bc = Array2(ny, nx);  // boundary conditions
+        bc = Array2(shape[0], shape[1]);  // boundary conditions
         bc.fill(0.);
-        electric_field = Array2(ny, nx);
-        electric_field.fill(0.);
-    }
-
-    Model(double xmin_, double xmax_, double ymin_, double ymax_, Array2 permittivity_):
-        xmin(xmin_), xmax(xmax_), ymin(ymin_), ymax(ymax_) {
-        int * shape = permittivity_.shape();
-        nx = shape[1];
-        ny = shape[0];
-        dx = (xmax - xmin)/(nx - 1);
-        permittivity = permittivity_;
-        bc = Array2(ny, nx);  // boundary conditions
-        bc.fill(0.);
-        electric_field = Array2(ny, nx);
+        electric_field = Array2(shape[0], shape[1]);
         electric_field.fill(0.);
     }
 
@@ -31,10 +18,11 @@ public:
 
     int * get_cell(double x, double y) const;  // get cell index from position
 
-protected:
-    double xmin, xmax, ymin, ymax, dx;
-    int nx, ny;
-    Array2 permittivity;
-    Array2 bc;
-    Array2 electric_field;
+    void solve(double tol, int maxiter, double omega, bool verbose);  // solve for electric field
+
+protected:    
+    Mesh mesh;
+    Array2 permittivity;  // permittivity array
+    Array2 bc;  // boundary conditions : 0 for interior node, 1 for Dirichlet
+    Array2 electric_field;  // electric field
 };
