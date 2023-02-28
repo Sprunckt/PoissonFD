@@ -2,7 +2,7 @@
 
 
 Mesh::Mesh(double xmin_, double xmax_, double ymin_, double ymax_, double dx_):   // default: interior is not computed
-    xmin(xmin_), xmax(xmax_), ymin(ymin_), ymax(ymax_), dx(dx_), nx((int) (ymax - ymin)/dx + 1), ny((int) (xmax - xmin)/dx + 1),
+    xmin(xmin_), xmax(xmax_), ymin(ymin_), ymax(ymax_), dx(dx_), nx((int) (ymax - ymin)/dx + 2), ny((int) (xmax - xmin)/dx + 2),
     permittivity(ny,nx), electric_field(ny,nx), node_type(ny,nx) {
     node_type.fill(-1.);
     permittivity.fill(1.);
@@ -88,17 +88,32 @@ std::pair<std::vector<int>, std::vector<int>> Circle::get_border_indices(Mesh me
     // compute the border indices of a circle on the given mesh using the midpoint algorithm
     std::vector<int> bindx;
     std::vector<int> bindy;
+    double * xbounds = mesh.get_xbounds();
+    double * ybounds = mesh.get_ybounds();
 
     // project circle center on mesh
     int * cell = mesh.get_cell(x, y);
     // project circle radius on mesh
-    int * cellr = mesh.get_cell(x + r, y + r);
+    int * cellr = mesh.get_cell(ybounds[0] + r, xbounds[0] + r);
 
     int currx = cellr[1];
     int curry = 0;  // start at the rightmost point of the circle
 
     // compute the first octant
     int d = 1 - cellr[1];
+    
+    // add left, right top and bottom points to the border indices
+    bindx.push_back(cell[1] + cellr[1]);
+    bindy.push_back(cell[0]);
+
+    bindx.push_back(cell[1]);
+    bindy.push_back(cell[0] + cellr[0]);
+
+    bindx.push_back(cell[1] - cellr[1]);
+    bindy.push_back(cell[0]);
+
+    bindx.push_back(cell[1]);
+    bindy.push_back(cell[0] - cellr[0]);
 
     while (currx > curry) {  // compute the 8 octants in clockwise order
         curry++;
@@ -160,8 +175,8 @@ std::pair<std::vector<int>, std::vector<int>> get_interior_indices(std::vector<i
     int ymax = *ybounds.second;
 
 
-    // encasing rectangle around the border, enlarged by 1 in each direction
-    Array2 labels = Array2(ymax - ymin + 1, xmax - xmin + 1);  
+    // encasing rectangle around the border, enlarged by 2 in each direction
+    Array2 labels = Array2(ymax - ymin + 3, xmax - xmin + 3);  
     int * shape = labels.shape();
 
     labels.fill(2);  // 0 for exterior, 1 for border, 2 for interior
@@ -170,16 +185,14 @@ std::pair<std::vector<int>, std::vector<int>> get_interior_indices(std::vector<i
     }
 
     // flood fill from exterior, starting point is the lower left corner
-    // initialize queue with the lower left corner
-    labels(0, 0) = 0;  // mark lower left corner as exterior
     std::queue<std::pair<int, int>> q;
-    q.push(std::make_pair(0, 0));
+    q.push(std::make_pair(0, 0));  
     while (!q.empty()) {
         std::pair<int, int> p = q.front();
         q.pop();
         int i = p.first;
         int j = p.second;
-        if (labels(i, j) == -1) {  // if unvisited, mark as exterior
+        if (labels(i, j) == 2) {  // if unvisited, mark as exterior
             labels(i, j) = 0;
             // add all neighbors to the queue
             if (i > 0) {
@@ -200,9 +213,9 @@ std::pair<std::vector<int>, std::vector<int>> get_interior_indices(std::vector<i
     // collect interior indices
     std::vector<int> iindx;
     std::vector<int> iindy;
-    for (int i = 0; i < shape[0]; i++) {
-        for (int j = 0; j < shape[1]; j++) {
-            if (labels(i, j) == 2) {
+    for (int i=1; i < shape[0] - 1; i++) {
+        for (int j=1; j < shape[1] - 1; j++) {
+            if ((labels(i, j) == 2)) {
                 iindx.push_back(j + xmin - 1);
                 iindy.push_back(i + ymin - 1);
             }
@@ -215,6 +228,10 @@ std::pair<std::vector<int>, std::vector<int>> get_interior_indices(std::vector<i
 
 
 Array2 Mesh::solve(double tol, int maxiter, double omega, bool verbose){
+    if (verbose) {
+        std::cout << "Solving for the electric field at tol " << tol << std::endl;
+    }
+
     // apply gauss-seidel method to solve in place for the electric field
     double error = tol + 1.;
     int iter = 0;
@@ -251,7 +268,7 @@ Array2 Mesh::solve(double tol, int maxiter, double omega, bool verbose){
         {
             for (int j=1; j < nx-1; j++)
             {
-                if (node_type(i,j) == 0)  // interior node
+                if (node_type(i,j) == 1)  // interior node
                 {
                     currval = electric_field(i,j);
                     electric_field(i,j) = ((1-omega)*currval + 

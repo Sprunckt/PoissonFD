@@ -29,12 +29,16 @@ public:
 
     int * get_shape() const;  // get shape of mesh
     inline double get_dx() const {return dx;}  // get mesh spacing
+    inline double * get_xbounds () const {return new double[2]{xmin, xmax};}  // get x bounds
+    inline double * get_ybounds () const {return new double[2]{ymin, ymax};}  // get y bounds
 
     // solve for electric field
     Array2 solve(double tol, int maxiter, double omega, bool verbose);
 
     Array2 & get_electric_field() {return electric_field;}  // get electric field
-
+    Array2 & get_permittivity() {return permittivity;}  // get permittivity
+    Array2 & get_node_type() {return node_type;}  // get node type
+    
 protected:
     double xmin, xmax, ymin, ymax, dx;
     int nx, ny;
