@@ -1,3 +1,6 @@
+#ifndef LINALG_H
+#define LINALG_H
+
 #include <cmath>
 #include <iostream>
 #include <fstream>
@@ -5,7 +8,7 @@
 
 class Array2 {
 public:
-    Array2() {}
+    Array2() {data = nullptr;}
 
     Array2(int n1, int n2): nx(n2), ny(n1) {
         data = new double[nx*ny];
@@ -51,8 +54,6 @@ public:
         return os;
     }
     
-    Array2 solve(Array2 bc, Array2 permittivity, double tol, int maxiter, double omega, bool verbose);
-
     void to_file(std::string filename);
 
 
@@ -60,3 +61,5 @@ protected:
     int nx, ny;
     double* data;
 };
+
+#endif
