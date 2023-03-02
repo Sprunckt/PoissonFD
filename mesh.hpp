@@ -6,10 +6,13 @@
 #include <tuple>
 #include <algorithm>
 #include <queue>
+#include <cmath>
 
 
 class Shape;
+class Mesh;
 std::pair<std::vector<int>, std::vector<int>> get_interior_indices(std::vector<int>, std::vector<int>);
+std::pair<std::vector<int>, std::vector<int>> draw_line(double x1, double y1, double x2, double y2, Mesh mesh);
 
 
 // mesh class that handles nodes positions and indexing
@@ -54,13 +57,13 @@ protected:
 class Shape {
 public:
     // abstract method to compute border indices on a mesh
-    virtual std::pair<std::vector<int>, std::vector<int>> get_border_indices(Mesh mesh) = 0;
+    virtual std::pair<std::vector<int>, std::vector<int>> get_border_indices(const Mesh mesh) = 0;
 };
 
 class Circle: public Shape {
 public:
     Circle(double x_, double y_, double r_): x(x_), y(y_), r(r_) {}
-    std::pair<std::vector<int>, std::vector<int>> get_border_indices(Mesh mesh);
+    std::pair<std::vector<int>, std::vector<int>> get_border_indices(const Mesh mesh);
 
     protected:
     double x, y, r;
@@ -70,7 +73,7 @@ class Polygon: public Shape {  // todo: implement border indices for polygon
 public:
     Polygon(std::vector<double> x_, std::vector<double> y_): x(x_), y(y_) {}
 
-    std::pair<std::vector<int>, std::vector<int>> get_border_indices(Mesh mesh);
+    std::pair<std::vector<int>, std::vector<int>> get_border_indices(const Mesh mesh);
 
     protected:
     std::vector<double> x, y;

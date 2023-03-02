@@ -37,7 +37,7 @@ public:
 
     inline double operator()(int i, int j) const {return data[i*nx + j];}
     
-    inline int * shape() const {int * s = new int[2]; s[0] = nx; s[1] = ny; return s;}
+    inline int * shape() const {int * s = new int[2]; s[1] = nx; s[0] = ny; return s;}
     inline int size() const {return nx*ny;}
 
     void fill(double value);

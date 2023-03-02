@@ -38,7 +38,7 @@ int main(int argc, char *argv[]) {
     double dx = 0.003;
     
 
-    if (test_case == 0)
+    if (test_case == 0)  // two coaxial cylinders
     {
         double xmin = -1.;
         double xmax = 1.;
@@ -50,7 +50,7 @@ int main(int argc, char *argv[]) {
         double perm_diel = 5.0;
         // create a circle
         Circle enclosure = Circle(0.0, 0.0, routside);
-        Circle inner_dielectric = Circle(0.0, 0.0, rinside);
+        Circle inner_dielectric = Circle(0.0, 0.0, rinside); 
         Circle conductor = Circle(0.0, 0.0, rconduct);
 
         Mesh mesh(xmin, xmax, ymin, ymax, dx);
@@ -93,8 +93,27 @@ int main(int argc, char *argv[]) {
         }
         exact_sol_array.to_file("exact_sol.txt");
     }
-   
+    else if (test_case == 1){  // one rectangular conductor encasing two circular conductors
+        double xmin = -1.1;
+        double xmax = 1.1;
+        double ymin = -1.;
+        double ymax = 1.;
+        double rconduct = 0.35; 
+        Polygon enclosure = Polygon({-1., 0.75, 1, -1}, {-0.5, -0.5, 0.75, 1});
+        Circle conductor = Circle(-0.35, 0.35, rconduct);
+        Circle conductor2 = Circle(0.1, -0.15, rconduct-0.1);
 
+        Mesh mesh(xmin, xmax, ymin, ymax, dx);
+        // create model
+        Model model(xmin, xmax, ymin, ymax, dx, {}, {&enclosure, &conductor, &conductor2}, {}, {0.0, 1.0, 0.0});
+        
+        int* shapem = model.get_mesh().get_shape();
+        std::cout << "Nb cells: " << shapem[0]*shapem[1] << std::endl;
+
+        // solve for electric field
+        model.solve(1e-6, 100000, 1.9, true);
+        model.get_mesh().get_electric_field().to_file("computed_sol2.txt");
+    }
     
     
 }

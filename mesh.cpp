@@ -2,7 +2,7 @@
 
 
 Mesh::Mesh(double xmin_, double xmax_, double ymin_, double ymax_, double dx_):   // default: interior is not computed
-    xmin(xmin_), xmax(xmax_), ymin(ymin_), ymax(ymax_), dx(dx_), nx((int) (ymax - ymin)/dx + 2), ny((int) (xmax - xmin)/dx + 2),
+    xmin(xmin_), xmax(xmax_), ymin(ymin_), ymax(ymax_), dx(dx_), nx((int) (xmax - xmin)/dx + 2), ny((int) (ymax - ymin)/dx + 2),
     permittivity(ny,nx), electric_field(ny,nx), node_type(ny,nx) {
     node_type.fill(-1.);
     permittivity.fill(1.);
@@ -84,17 +84,16 @@ int * Mesh::get_shape() const {
 }
 
 
-std::pair<std::vector<int>, std::vector<int>> Circle::get_border_indices(Mesh mesh) {
+std::pair<std::vector<int>, std::vector<int>> Circle::get_border_indices(const Mesh mesh) {
     // compute the border indices of a circle on the given mesh using the midpoint algorithm
     std::vector<int> bindx;
     std::vector<int> bindy;
     double * xbounds = mesh.get_xbounds();
     double * ybounds = mesh.get_ybounds();
-
     // project circle center on mesh
     int * cell = mesh.get_cell(x, y);
     // project circle radius on mesh
-    int * cellr = mesh.get_cell(ybounds[0] + r, xbounds[0] + r);
+    int * cellr = mesh.get_cell(xbounds[0] + r, ybounds[0] + r);
 
     int currx = cellr[1];
     int curry = 0;  // start at the rightmost point of the circle
@@ -153,17 +152,63 @@ std::pair<std::vector<int>, std::vector<int>> Circle::get_border_indices(Mesh me
         }
     }
 
-    return make_pair(bindx, bindy);
+    return make_pair(bindy, bindx);
+}
+
+std::pair<std::vector<int>, std::vector<int>> draw_line(double x1, double y1, double x2, double y2, Mesh mesh) {
+    /*Draw a line using the Bresenham algorithm*/
+    std::vector<int> xind;
+    std::vector<int> yind;
+    int * cell1 = mesh.get_cell(x1, y1);
+    int * cell2 = mesh.get_cell(x2, y2);
+    int xspan = cell2[1] - cell1[1];
+    int yspan = cell2[0] - cell1[0];
+    int xstep = xspan > 0 ? 1 : -1;
+    int ystep = yspan > 0 ? 1 : -1;
+    xspan = abs(xspan);
+    yspan = abs(yspan);
+    int x = cell1[1];
+    int y = cell1[0];
+    int d = 0;
+    int err = xspan - yspan;
+    while (true) {
+        xind.push_back(x);
+        yind.push_back(y);
+        if (x == cell2[1] && y == cell2[0]) {
+            break;
+        }
+        int e2 = 2*err;
+        if (e2 > -yspan) {
+            err -= yspan;
+            x += xstep;
+        }
+        if (e2 < xspan) {
+            err += xspan;
+            y += ystep;
+        }
+    }
+    return make_pair(yind, xind);
 }
 
 
-std::pair<std::vector<int>, std::vector<int>> Polygon::get_border_indices(Mesh mesh) {
-    // todo
-    return make_pair(std::vector<int>(), std::vector<int>());
+
+std::pair<std::vector<int>, std::vector<int>> Polygon::get_border_indices(const Mesh mesh) {
+    std::vector<int> bindx;
+    std::vector<int> bindy;
+    for (uint i = 0; i < x.size() - 1; i++) {  // draw lines between the vertices
+        auto line = draw_line(x[i], y[i], x[i+1], y[i+1], mesh);
+        bindx.insert(bindx.end(), line.second.begin(), line.second.end());
+        bindy.insert(bindy.end(), line.first.begin(), line.first.end());
+    }
+    auto line = draw_line(x[x.size() - 1], y[y.size() - 1], x[0], y[0], mesh);
+    bindx.insert(bindx.end(), line.second.begin(), line.second.end());
+    bindy.insert(bindy.end(), line.first.begin(), line.first.end());
+
+    return make_pair(bindy, bindx);
 }
 
 
-std::pair<std::vector<int>, std::vector<int>> get_interior_indices(std::vector<int> xind, std::vector<int> yind){
+std::pair<std::vector<int>, std::vector<int>> get_interior_indices(std::vector<int> yind, std::vector<int> xind){
     /* compute the interior indices of a polygon on the given mesh using the flood fill algorithm, 
     assume the shape has only one connected component*/
 
@@ -222,7 +267,7 @@ std::pair<std::vector<int>, std::vector<int>> get_interior_indices(std::vector<i
         }
     }
     
-    return make_pair(iindx, iindy);
+    return make_pair(iindy, iindx);
 }
 
 
