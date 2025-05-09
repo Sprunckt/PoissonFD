@@ -12,7 +12,6 @@ Model::Model(double xmin_, double xmax_, double ymin_, double ymax_, double dx_,
 }
 
 
-
 void Model::solve(double tol, int maxiter, double omega, bool verbose) {
     this->mesh.solve(tol, maxiter, omega, verbose);
 }

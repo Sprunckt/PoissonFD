@@ -48,9 +48,14 @@ int main(int argc, char *argv[]) {
         double routside = 1.0;
         double rconduct = 0.25; 
         double perm_diel = 5.0;
-        // create a circle
+
+        // enclosing conductor
         Circle enclosure = Circle(0.0, 0.0, routside);
+
+        // inner dielectric (= region with a different permittivity, the default permittivity is set to 1.0)
         Circle inner_dielectric = Circle(0.0, 0.0, rinside); 
+
+        // inner conductor
         Circle conductor = Circle(0.0, 0.0, rconduct);
 
         Mesh mesh(xmin, xmax, ymin, ymax, dx);
@@ -58,7 +63,7 @@ int main(int argc, char *argv[]) {
         auto borderind = enclosure.get_border_indices(mesh);
         auto interiorind = get_interior_indices(borderind.first, borderind.second);
 
-        // create array to test the border indices
+        // create an array containing the border indices, for testing purposes
         int shape[2] = {mesh.get_shape()[0], mesh.get_shape()[1]};
         Array2 test(shape[0], shape[1]);
         test.fill(0.0);
@@ -68,17 +73,16 @@ int main(int argc, char *argv[]) {
         for (uint i=0; i < interiorind.first.size(); i++) {
             test(interiorind.first[i], interiorind.second[i]) = 2.0;
         }
-
         // std::cout << test << std::endl;
 
-        // create model
+        // create the model : list of dielectrics, conductors, permittivities of each dieletric, potentials of each conductor
         Model model(xmin, xmax, ymin, ymax, dx, {&inner_dielectric}, {&enclosure, &conductor}, {perm_diel}, {0.0, 1.0});
         
         int* shapem = model.get_mesh().get_shape();
         std::cout << "Nb cells: " << shapem[0]*shapem[1] << std::endl;
 
         // solve for electric field
-        model.solve(1e-6, 100000, 1.9, true);
+        model.solve(1e-3, 100000, 1.9, true);
         model.get_mesh().get_electric_field().to_file("computed_sol.txt");
 
         // compute exact solution at mesh points
@@ -93,7 +97,7 @@ int main(int argc, char *argv[]) {
         }
         exact_sol_array.to_file("exact_sol.txt");
     }
-    else if (test_case == 1){  // one rectangular conductor encasing two circular conductors
+    else if (test_case == 1){  // one polygonal conductor encasing two circular conductors
         double xmin = -1.1;
         double xmax = 1.1;
         double ymin = -1.;
@@ -114,6 +118,26 @@ int main(int argc, char *argv[]) {
         model.solve(1e-6, 100000, 1.9, true);
         model.get_mesh().get_electric_field().to_file("computed_sol2.txt");
     }
-    
-    
+
+    else if (test_case == 2){  // multiple conductors inside a L-shaped enclosure
+        double xmin = -1.2;
+        double xmax = 1.2;
+        double ymin = -1.1;
+        double ymax = 1.2;
+        Polygon enclosure = Polygon({-1.15, 1, 1, 0, 0, -1.15}, {-1.07, -1.07, 0., 0, 1.13, 1.13});
+        Polygon conductor = Polygon({0.343, -0.542, -0.732, 0.154}, {-0.637, 0.201, 0.0013, -0.837});
+        Circle conductor2 = Circle(-0.6, -0.6, 0.24);
+        Polygon conductor3 = Polygon({-0.82, -0.51, -0.2, -0.51}, {0.66, 0.35, 0.66, 0.97});
+        
+        Mesh mesh(xmin, xmax, ymin, ymax, dx);
+        // create model
+        Model model(xmin, xmax, ymin, ymax, dx, {}, {&enclosure, &conductor, &conductor2, &conductor3}, 
+                    {}, {0.0, 1.0, 0.0, 0.5});
+        
+        int* shapem = model.get_mesh().get_shape();
+        std::cout << "Nb cells: " << shapem[0]*shapem[1] << std::endl; 
+
+        model.solve(1e-6, 100000, 1.9, true);
+        model.get_mesh().get_electric_field().to_file("computed_sol3.txt");
+    }
 }

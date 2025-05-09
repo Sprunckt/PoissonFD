@@ -69,7 +69,7 @@ public:
     double x, y, r;
 };
 
-class Polygon: public Shape {  // todo: implement border indices for polygon
+class Polygon: public Shape { 
 public:
     Polygon(std::vector<double> x_, std::vector<double> y_): x(x_), y(y_) {}
 

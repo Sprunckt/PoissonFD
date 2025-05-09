@@ -2,8 +2,9 @@
 
 
 Mesh::Mesh(double xmin_, double xmax_, double ymin_, double ymax_, double dx_):   // default: interior is not computed
-    xmin(xmin_), xmax(xmax_), ymin(ymin_), ymax(ymax_), dx(dx_), nx((int) (xmax - xmin)/dx + 2), ny((int) (ymax - ymin)/dx + 2),
-    permittivity(ny,nx), electric_field(ny,nx), node_type(ny,nx) {
+    xmin(xmin_), xmax(xmax_), ymin(ymin_), ymax(ymax_), dx(dx_), 
+    nx((int) ((xmax - xmin)/dx) + 2), ny((int) ((ymax - ymin)/dx) + 2),
+    permittivity(ny, nx), electric_field(ny, nx), node_type(ny, nx) {
     node_type.fill(-1.);
     permittivity.fill(1.);
     electric_field.fill(0.);
@@ -169,7 +170,6 @@ std::pair<std::vector<int>, std::vector<int>> draw_line(double x1, double y1, do
     yspan = abs(yspan);
     int x = cell1[1];
     int y = cell1[0];
-    int d = 0;
     int err = xspan - yspan;
     while (true) {
         xind.push_back(x);
